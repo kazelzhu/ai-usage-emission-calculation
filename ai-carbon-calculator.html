@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>看不见的账单 / The Invisible Bill</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#12151A; --panel:#1B1F26; --panel-2:#20252D; --border:#2A2F38;
+    --text:#EDEAE3; --muted:#8B93A3; --ember:#D64933; --ember-dim:#7A2E1F;
+    --teal:#3FA796; --amber:#E8A33D;
+    padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px);
+    box-sizing:border-box;
+  }
+  *{box-sizing:border-box;}
+  html{scroll-padding-top:env(safe-area-inset-top,0px);}
+  body{
+    margin:0; background:var(--bg); color:var(--text);
+    font-family:'IBM Plex Sans',system-ui,sans-serif;
+    line-height:1.55; -webkit-font-smoothing:antialiased;
+  }
+  .wrap{max-width:760px; margin:0 auto; padding:48px 20px 80px;}
+  header{margin-bottom:40px; display:flex; justify-content:space-between; align-items:flex-start; gap:16px;}
+  .head-text{flex:1;}
+  .eyebrow{color:var(--muted); font-size:13px; letter-spacing:.02em; margin:0 0 14px;}
+  h1{
+    font-family:'Fraunces',serif; font-weight:600; font-size:clamp(30px,7vw,48px);
+    line-height:1.08; margin:0 0 16px; letter-spacing:-.01em;
+  }
+  h1 em{font-style:italic; color:var(--ember); font-weight:400;}
+  .lede{color:var(--muted); font-size:16px; max-width:52ch; margin:0;}
+
+  .lang-toggle{
+    flex:0 0 auto; display:flex; background:var(--panel-2); border:1px solid var(--border);
+    border-radius:20px; padding:3px; margin-top:2px;
+  }
+  .lang-toggle button{
+    background:transparent; border:none; color:var(--muted); font-family:'IBM Plex Sans';
+    font-size:12.5px; font-weight:500; padding:6px 12px; border-radius:16px; cursor:pointer;
+  }
+  .lang-toggle button.active{background:var(--ember); color:#fff;}
+
+  .card{
+    background:var(--panel); border:1px solid var(--border); border-radius:14px;
+    padding:28px; margin-bottom:20px;
+  }
+  .card h2{
+    font-family:'IBM Plex Sans'; font-size:13px; font-weight:600; color:var(--muted);
+    margin:0 0 16px; text-transform:none;
+  }
+
+  .pill-row{display:flex; flex-wrap:wrap; gap:10px;}
+  .pill{
+    flex:1 1 140px; background:var(--panel-2); border:1px solid var(--border);
+    border-radius:10px; padding:14px 14px 12px; cursor:pointer; text-align:left;
+    color:var(--text); font-family:inherit; font-size:14px;
+  }
+  .pill .ico{font-size:20px; display:block; margin-bottom:6px;}
+  .pill .sub{display:block; color:var(--muted); font-size:12px; margin-top:3px;}
+  .pill.active{border-color:var(--ember); background:linear-gradient(180deg,rgba(214,73,51,.14),rgba(214,73,51,.04));}
+
+  .row{display:flex; align-items:center; gap:14px; flex-wrap:wrap; margin-top:18px;}
+  .row label{font-size:13px; color:var(--muted); min-width:64px;}
+  input[type=number]{
+    background:var(--panel-2); border:1px solid var(--border); color:var(--text);
+    border-radius:8px; padding:10px 12px; font-size:15px; width:110px; font-family:'IBM Plex Mono',monospace;
+  }
+  .presets{display:flex; gap:8px; flex-wrap:wrap;}
+  .preset-btn{
+    background:transparent; border:1px solid var(--border); color:var(--muted);
+    border-radius:20px; padding:7px 13px; font-size:12.5px; cursor:pointer; font-family:inherit;
+  }
+  .preset-btn.active{border-color:var(--teal); color:var(--teal);}
+
+  .result{
+    background:linear-gradient(160deg,#1E232B,#171B21); border:1px solid var(--border);
+    border-radius:16px; padding:32px 28px; text-align:center; margin-bottom:20px;
+  }
+  .result .amount{
+    font-family:'Fraunces',serif; font-weight:700; font-size:clamp(40px,10vw,64px);
+    color:var(--ember); line-height:1; margin-bottom:6px;
+  }
+  .result .amount span{font-size:.4em; color:var(--muted); font-weight:400; margin-left:6px;}
+  .result .label{color:var(--muted); font-size:14px;}
+
+  .equiv-grid{display:grid; grid-template-columns:repeat(2,1fr); gap:12px;}
+  .equiv{
+    background:var(--panel-2); border:1px solid var(--border); border-radius:12px;
+    padding:16px; overflow-x:auto;
+  }
+  .equiv .ico{font-size:22px; display:block; margin-bottom:8px;}
+  .equiv .num{font-family:'Fraunces',serif; font-size:22px; font-weight:600; white-space:nowrap;}
+  .equiv .desc{color:var(--muted); font-size:12.5px; margin-top:2px;}
+
+  details{color:var(--muted); font-size:13.5px;}
+  summary{cursor:pointer; color:var(--teal); margin-bottom:10px;}
+  details p{margin:8px 0;}
+  details code{font-family:'IBM Plex Mono',monospace; font-size:12px; background:var(--panel-2); padding:1px 5px; border-radius:4px;}
+
+  footer{color:var(--muted); font-size:12px; margin-top:32px; text-align:center;}
+  @media (max-width:480px){ .equiv-grid{grid-template-columns:1fr 1fr;} header{flex-direction:column;} }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <div class="head-text">
+      <p class="eyebrow" id="t-eyebrow"></p>
+      <h1 id="t-h1"></h1>
+      <p class="lede" id="t-lede"></p>
+    </div>
+    <div class="lang-toggle">
+      <button id="btn-zh" data-lang="zh">中文</button>
+      <button id="btn-en" data-lang="en">EN</button>
+    </div>
+  </header>
+
+  <div class="card">
+    <h2 id="t-h2-activity"></h2>
+    <div class="pill-row" id="activityRow"></div>
+  </div>
+
+  <div class="card">
+    <h2 id="t-h2-qty"></h2>
+    <div class="row">
+      <label id="t-label-qty"></label>
+      <input type="number" id="qty" value="1" min="1" step="1">
+    </div>
+    <div class="presets" id="presetRow" style="margin-top:12px;"></div>
+  </div>
+
+  <div class="result">
+    <div class="amount" id="co2Amount">0<span>g CO&#8322;e</span></div>
+    <div class="label" id="energyLabel"></div>
+  </div>
+
+  <div class="card">
+    <h2 id="t-h2-equiv"></h2>
+    <div class="equiv-grid" id="equivGrid"></div>
+  </div>
+
+  <div class="card">
+    <details>
+      <summary id="t-summary"></summary>
+      <div id="t-details"></div>
+    </details>
+  </div>
+
+  <div class="card">
+    <details>
+      <summary id="t-summary2"></summary>
+      <div id="t-details2"></div>
+    </details>
+  </div>
+
+  <footer id="t-footer"></footer>
+</div>
+
+<script>
+const activities = [
+  {id:'chat', ico:'\u{1F4AC}', wh:1,
+    name:{zh:'简单对话', en:'Simple chat'}, sub:{zh:'一句问答', en:'one Q&A'}},
+  {id:'doc', ico:'\u{1F4C4}', wh:70,
+    name:{zh:'长文深度分析', en:'Deep document analysis'}, sub:{zh:'约万字文献', en:'~10k-word paper'}},
+  {id:'code', ico:'\u{1F4BB}', wh:40,
+    name:{zh:'编程/调试', en:'Coding / debugging'}, sub:{zh:'一次多轮会话', en:'one multi-turn session'}},
+  {id:'image', ico:'\u{1F5BC}\u{FE0F}', wh:2,
+    name:{zh:'生成一张图', en:'Generate one image'}, sub:{zh:'AI 绘图', en:'AI image gen'}},
+  {id:'video', ico:'\u{1F3AC}', wh:1500,
+    name:{zh:'生成1分钟视频', en:'Generate 1-min video'}, sub:{zh:'AI 视频', en:'AI video gen'}},
+];
+const GRID_CI = 458; // Global grid carbon intensity, Ember "Global Electricity Review 2026", 2025 data
+
+const presets = [
+  {qty:1, zh:'单次', en:'Once'},
+  {qty:365, zh:'每天1次 · 一年', en:'1x/day · 1 year'},
+  {qty:1825, zh:'每天5次 · 一年', en:'5x/day · 1 year'},
+  {qty:18250, zh:'每天50次 · 一年', en:'50x/day · 1 year'},
+];
+
+const STR = {
+  eyebrow: {zh:'AI 使用 · 碳足迹速算', en:'AI usage · carbon footprint estimator'},
+  h1: {
+    zh:'方便是<em>免费</em>的，<br>耗电不是。',
+    en:'Convenience is <em>free</em>.<br>Electricity isn\u2019t.'
+  },
+  lede: {
+    zh:'每次对话、每张图、每段视频背后都是真实的电力和碳排放。选一种用法，看看攒起来是什么量级——数字是粗略估算，用来建立直觉，不是精确审计。',
+    en:'Every chat, image and video draws real electricity and emits real carbon. Pick a use case and see what it adds up to \u2014 these are rough order-of-magnitude estimates for intuition, not an audit.'
+  },
+  h2Activity: {zh:'你在做什么', en:'What are you doing'},
+  h2Qty: {zh:'用了多少次', en:'How many times'},
+  labelQty: {zh:'次数', en:'Count'},
+  h2Equiv: {zh:'换算成你能感受到的东西', en:'Translated into things you can feel'},
+  summary: {zh:'这些数字是怎么算的', en:'How these numbers are calculated'},
+  summary2: {zh:'"免费"背后，谁在买单', en:'Behind "free": who actually pays'},
+  footer: {zh:'粗略估算，仅供建立数量级直觉 · 非官方审计数据', en:'Rough estimate for order-of-magnitude intuition \u00b7 not official audited data'},
+  energyLabel: {
+    zh: (whStr, name, qty) => `耗电 ${whStr} Wh \u00b7 ${name} \u00d7 ${qty} 次`,
+    en: (whStr, name, qty) => `${whStr} Wh used \u00b7 ${name} \u00d7 ${qty}`
+  },
+  equivDesc: {
+    gasoline: {zh:'燃烧的汽油', en:'gasoline burned'},
+    coal: {zh:'燃烧的煤炭', en:'coal burned'},
+    phone: {zh:'手机满充电', en:'phone charges'},
+    car: {zh:'燃油车行驶', en:'gas car driven'},
+    bulb: {zh:'60W灯泡点亮', en:'60W bulb lit'},
+  },
+  details: {
+    zh: `
+      <p>学术研究里更标准的做法是从单token算起：<code>能耗(Wh) = 硬件功率(W) \u00d7 推理时长(s) / (token数 \u00d7 3600)</code>，算出"每token能耗"后，再乘以一次请求的输入+输出token总数，得到单次请求的耗电量。这个方法更精确，但需要知道具体硬件功率、推理时长这些普通用户拿不到的数据。这个工具做了简化：直接把"每token能耗 \u00d7 典型token数"预先折算成每种使用场景的单次耗电量，跳过了逐token计算这一步，本质是同一套逻辑，只是把颗粒度从"token"粗化到了"一次典型使用"。</p>
+      <p>拿到单次耗电量后，再走三步换算：<code>总耗电(Wh) = 单次能耗(Wh) \u00d7 使用次数</code> \u2192 <code>总耗电(kWh) = 总耗电(Wh) \u00f7 1000</code> \u2192 <code>碳排放(gCO\u2082e) = 总耗电(kWh) \u00d7 电网碳强度(g/kWh)</code>。最后再用换算系数把 gCO\u2082e 转成汽油、煤炭等直观单位。这个模型省略了数据中心PUE（电源使用效率，实际耗电通常比GPU本身耗电再高10%-50%）和训练阶段的一次性摊销，所以是保守估算，真实值可能更高。</p>
+      <p>单次能耗是公开研究里常见量级的中位估算，真实值受模型大小、上下文长度、硬件、机房效率影响，上下差可达数倍：</p>
+      <p>\u{1F4AC} 简单问答 <code>~1 Wh</code>\u3000\u{1F4C4} 万字长文深度分析 <code>~70 Wh</code>（长上下文推理耗电显著更高）\u3000\u{1F4BB} 一次编程/调试会话 <code>~40 Wh</code>（多轮来回、长上下文）\u3000\u{1F5BC}\u{FE0F} 生成一张图片 <code>~2 Wh</code>\u3000\u{1F3AC} 生成1分钟视频 <code>~1500 Wh</code>（视频模型逐帧生成，是目前最耗能的常见场景，公开数据很少，这里取保守区间的中值）</p>
+      <p>换算系数：汽油燃烧 <code>2.31 kg CO\u2082/L</code>；煤炭燃烧 <code>2.42 kg CO\u2082/kg</code>；手机满充约 <code>15 Wh</code>；燃油车每公里约 <code>130 g CO\u2082</code>；60W白炽灯泡每小时 <code>60 Wh</code>。电网碳强度取全球均值 <code>458 g/kWh</code>——数据来自 Ember《Global Electricity Review 2026》，是2025年全年的实际数据（截至目前最新）。全球电网碳强度过去十年从2015年的533降到2025年的458，2025年单年就降了2.7%，是近十年降幅最大的一年，主要因为太阳能发电增速首次远超煤电，煤电占比也首次跌破三分之一。不再按国家/地区区分——各地实际差异可达数倍（水电/核电为主的电网低至60g/kWh，煤电为主的地区可能超过700g/kWh），这里只取一个中间量级，用来感受数量级，不是精确对应你所在地区的电网。</p>
+      <p>单次操作的碳排放通常很小——真正值得警惕的是"免费"带来的使用频率：日均几十次、一年下来，量级就完全不同了。</p>
+    `,
+    en: `
+      <p>The more standard academic approach starts from per-token energy: <code>Energy(Wh) = Hardware power(W) \u00d7 Inference time(s) / (tokens \u00d7 3600)</code>. That gives energy-per-token, which is then multiplied by a request's total input+output tokens to get per-request energy. It's more precise, but needs hardware power and inference-time data that ordinary users don't have. This tool simplifies that: it pre-multiplies "energy-per-token \u00d7 typical token count" into a single per-use figure for each scenario, skipping the token-by-token step \u2014 same underlying logic, just coarser granularity (one typical use instead of one token).</p>
+      <p>From per-use energy, three more steps get to carbon: <code>Total energy(Wh) = per-use energy(Wh) \u00d7 count</code> \u2192 <code>Total energy(kWh) = Wh \u00f7 1000</code> \u2192 <code>Emissions(gCO\u2082e) = kWh \u00d7 grid carbon intensity(g/kWh)</code>. That gCO\u2082e figure is then converted into gasoline, coal, etc. using the factors below. This model leaves out datacenter PUE (power usage effectiveness \u2014 actual draw is typically 10\u201350% above the GPU's own consumption) and any amortized training-phase emissions, so it's a conservative estimate; real numbers could be higher.</p>
+      <p>Per-use energy figures are median-order-of-magnitude estimates from public research; real values vary several-fold depending on model size, context length, hardware, and datacenter efficiency:</p>
+      <p>\u{1F4AC} Simple chat <code>~1 Wh</code>\u3000\u{1F4C4} Deep long-document analysis <code>~70 Wh</code> (long-context inference is markedly heavier)\u3000\u{1F4BB} One coding/debugging session <code>~40 Wh</code> (multi-turn, long context)\u3000\u{1F5BC}\u{FE0F} One image generation <code>~2 Wh</code>\u3000\u{1F3AC} One 1-minute video generation <code>~1500 Wh</code> (video models generate frame by frame, currently the heaviest common case; public data is sparse, so this is a mid-point of a conservative range)</p>
+      <p>Conversion factors: gasoline combustion <code>2.31 kg CO\u2082/L</code>; coal combustion <code>2.42 kg CO\u2082/kg</code>; one full phone charge \u2248 <code>15 Wh</code>; a gas car \u2248 <code>130 g CO\u2082/km</code>; a 60W incandescent bulb \u2248 <code>60 Wh/hour</code>. Grid intensity uses the global average <code>458 g/kWh</code> \u2014 from Ember's "Global Electricity Review 2026", the actual full-year 2025 figure (latest available). Global grid intensity fell from 533 g/kWh in 2015 to 458 in 2025, dropping 2.7% in 2025 alone \u2014 the largest single-year decline in a decade, driven mainly by solar growth outpacing coal for the first time. This no longer breaks out by country/region \u2014 real differences span several-fold (hydro/nuclear-heavy grids as low as 60g/kWh, coal-heavy regions above 700g/kWh) \u2014 458 is just a mid-range figure for a sense of scale, not a match to your specific location.</p>
+      <p>A single action's footprint is usually tiny \u2014 what's actually worth noticing is the frequency that "free" enables: tens of uses a day, compounded over a year, land at a completely different order of magnitude.</p>
+    `
+  },
+  details2: {
+    zh: `
+      <p>目前主要有三个"池子"在填这笔账：</p>
+      <p><strong>投资人的钱。</strong>2026年中，独立记者Ed Zitron公开的OpenAI 2025年财务数据显示：营收130.7亿美元，营业亏损209.2亿美元，算上转股权证估值变动，归属公司的最终净亏损达385亿美元。这不是个例——视频生成公司每天模型迭代要花十万人民币量级，Agent公司单用户日成本能到100-200美元，价格战已把毛利压到极限。"免费"和低价这两年基本是靠VC的钱在硬撑，赌的是未来能靠市场份额赚回来；进入2026年，越来越多投资人开始收紧对AI软件的投入。</p>
+      <p><strong>数据中心周边的居民电费。</strong>2018到2023年间，数据中心用电量占美国总用电量比重从1.9%升至4.4%，有研究预测到2030年全美平均批发电价可能上涨6%-29%，个别地区涨幅更高，部分数据中心附近区域的批发电价比五年前贵了最多267%。不过这不是定论——也有研究发现至少截至2024年，数据中心因规模经济效应总体上压低了居民电价；真实情况更像是这层关系正在反转，尤其在电网容量吃紧、需要大规模扩建的地区。2026年3月美国白宫为此推出了"电力用户保护承诺"，要求大型科技公司自行承担相关新增供电成本，部分公司（包括Anthropic）也公开承诺会覆盖电网升级费用。</p>
+      <p><strong>环境和未来所有人。</strong>这层最隐蔽——碳排放的长期气候成本目前没有被计入任何一张账单，既不在AI公司的财报里，也不在用户的电费单里，而是被分摊给了地球上所有人和未来几十年，是典型的外部性成本。</p>
+      <p>多个信号指向这种局面撑不了太久：2026年开始已能看到免费额度收紧、API涨价、订阅制转向按量计费的趋势——本质上是这笔"迟到的账单"开始被送到用户手上。</p>
+    `,
+    en: `
+      <p>Right now three "pools" are covering this tab:</p>
+      <p><strong>Investors' money.</strong> In mid-2026, independent journalist Ed Zitron published OpenAI's 2025 financials: revenue of $13.07B against an operating loss of $20.92B; once convertible-note and warrant valuation changes are included, the company's attributable net loss reached $38.5B. This isn't an isolated case \u2014 video-generation companies can burn roughly six figures (RMB) a day on model iteration, agent companies can run $100\u2013200 per user per day, and price wars have squeezed margins to the limit. "Free" and cheap pricing have largely been propped up by VC money betting on future market share; heading into 2026, more investors are pulling back from AI software.</p>
+      <p><strong>Electricity bills for people near data centers.</strong> Data centers' share of total U.S. electricity use rose from 1.9% in 2018 to 4.4% in 2023; one study projects average U.S. wholesale electricity prices could rise 6\u201329% by 2030, with sharper increases in some regions, and wholesale prices near some data centers have reportedly risen as much as 267% versus five years ago. This isn't settled, though \u2014 other research found that at least through 2024, data centers' economies of scale actually lowered residential rates overall; the more accurate picture may be that this relationship is now flipping, especially in regions where grid capacity is strained and needs major expansion. In March 2026 the White House introduced a "Ratepayer Protection Pledge" requiring major tech firms to cover the incremental power costs tied to their data centers, and some companies (including Anthropic) have publicly committed to covering grid-upgrade costs.</p>
+      <p><strong>The environment, and everyone in the future.</strong> This is the least visible pool \u2014 the long-term climate cost of carbon emissions isn't on anyone's bill yet, not in an AI company's earnings report and not on a user's electricity statement. It's a classic externality, diffused across everyone on the planet and the decades ahead.</p>
+      <p>Multiple signals suggest this can't hold much longer: free tiers tightening, API prices rising, subscriptions shifting to usage-based billing \u2014 in short, this "overdue bill" is starting to land on users directly.</p>
+    `
+  }
+};
+
+let state = {activity:'chat', qty:1, lang:'zh'};
+
+function fmt(n, d=1, lang='zh'){
+  const locale = lang==='zh' ? 'zh-CN' : 'en-US';
+  if(n>=1000) return n.toLocaleString(locale,{maximumFractionDigits:0});
+  if(n>=10) return n.toFixed(0);
+  return n.toFixed(d);
+}
+
+const activityRow = document.getElementById('activityRow');
+activities.forEach(a=>{
+  const btn = document.createElement('button');
+  btn.className = 'pill';
+  btn.onclick = ()=>{ state.activity=a.id; render(); };
+  btn.dataset.id = a.id;
+  activityRow.appendChild(btn);
+});
+
+const presetRow = document.getElementById('presetRow');
+presets.forEach(p=>{
+  const btn = document.createElement('button');
+  btn.className = 'preset-btn';
+  btn.dataset.qty = p.qty;
+  btn.onclick = ()=>{
+    state.qty = p.qty;
+    document.getElementById('qty').value = p.qty;
+    document.querySelectorAll('.preset-btn').forEach(b=>b.classList.remove('active'));
+    btn.classList.add('active');
+    render();
+  };
+  presetRow.appendChild(btn);
+});
+
+const qtyInput = document.getElementById('qty');
+qtyInput.addEventListener('input', ()=>{
+  state.qty = Math.max(1, parseInt(qtyInput.value)||1);
+  document.querySelectorAll('.preset-btn').forEach(b=>b.classList.remove('active'));
+  render();
+});
+
+document.querySelectorAll('.lang-toggle button').forEach(btn=>{
+  btn.onclick = ()=>{ state.lang = btn.dataset.lang; render(); };
+});
+
+function render(){
+  const L = state.lang;
+  document.documentElement.lang = L==='zh' ? 'zh-CN' : 'en';
+  document.title = L==='zh' ? '看不见的账单 \u2014 AI使用碳足迹速算' : 'The Invisible Bill \u2014 AI carbon footprint estimator';
+
+  document.querySelectorAll('.lang-toggle button').forEach(b=>b.classList.toggle('active', b.dataset.lang===L));
+
+  document.getElementById('t-eyebrow').textContent = STR.eyebrow[L];
+  document.getElementById('t-h1').innerHTML = STR.h1[L];
+  document.getElementById('t-lede').textContent = STR.lede[L];
+  document.getElementById('t-h2-activity').textContent = STR.h2Activity[L];
+  document.getElementById('t-h2-qty').textContent = STR.h2Qty[L];
+  document.getElementById('t-label-qty').textContent = STR.labelQty[L];
+  document.getElementById('t-h2-equiv').textContent = STR.h2Equiv[L];
+  document.getElementById('t-summary').textContent = STR.summary[L];
+  document.getElementById('t-details').innerHTML = STR.details[L];
+  document.getElementById('t-summary2').textContent = STR.summary2[L];
+  document.getElementById('t-details2').innerHTML = STR.details2[L];
+  document.getElementById('t-footer').textContent = STR.footer[L];
+
+  document.querySelectorAll('#activityRow .pill').forEach((btn,i)=>{
+    const a = activities[i];
+    btn.innerHTML = `<span class="ico">${a.ico}</span>${a.name[L]}<span class="sub">${a.sub[L]}</span>`;
+    btn.classList.toggle('active', a.id===state.activity);
+  });
+
+  document.querySelectorAll('#presetRow .preset-btn').forEach((btn,i)=>{
+    btn.textContent = presets[i][L];
+  });
+
+  const act = activities.find(a=>a.id===state.activity);
+  const totalWh = act.wh * state.qty;
+  const totalKWh = totalWh/1000;
+  const co2g = totalKWh * GRID_CI;
+
+  document.getElementById('energyLabel').textContent = STR.energyLabel[L](fmt(totalWh,1,L), act.name[L], state.qty.toLocaleString(L==='zh'?'zh-CN':'en-US'));
+  const co2El = document.getElementById('co2Amount');
+  const kgLabel = L==='zh' ? 'kg CO\u2082e' : 'kg CO\u2082e';
+  const gLabel = L==='zh' ? 'g CO\u2082e' : 'g CO\u2082e';
+  if(co2g >= 1000){
+    co2El.innerHTML = `${fmt(co2g/1000,2,L)}<span>${kgLabel}</span>`;
+  } else {
+    co2El.innerHTML = `${fmt(co2g,1,L)}<span>${gLabel}</span>`;
+  }
+
+  const gasolineL = co2g/2310;
+  const coalKg = co2g/2420;
+  const phoneCharges = totalWh/15;
+  const carKm = co2g/130;
+  const bulbHours = totalWh/60;
+
+  const equivs = [
+    {ico:'\u26FD', num:`${fmt(gasolineL,2,L)} L`, desc:STR.equivDesc.gasoline[L]},
+    {ico:'\u26AB', num:`${fmt(coalKg,2,L)} kg`, desc:STR.equivDesc.coal[L]},
+    {ico:'\u{1F50B}', num:`${fmt(phoneCharges,1,L)} ${L==='zh'?'次':'x'}`, desc:STR.equivDesc.phone[L]},
+    {ico:'\u{1F697}', num:`${fmt(carKm,2,L)} km`, desc:STR.equivDesc.car[L]},
+    {ico:'\u{1F4A1}', num:`${fmt(bulbHours,1,L)} h`, desc:STR.equivDesc.bulb[L]},
+  ];
+  const grid_el = document.getElementById('equivGrid');
+  grid_el.innerHTML = '';
+  equivs.forEach(e=>{
+    const div = document.createElement('div');
+    div.className = 'equiv';
+    div.innerHTML = `<span class="ico">${e.ico}</span><div class="num">${e.num}</div><div class="desc">${e.desc}</div>`;
+    grid_el.appendChild(div);
+  });
+}
+
+render();
+</script>
+</body>
+</html>
